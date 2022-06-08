@@ -1,0 +1,264 @@
+load mint.type
+
+package cairo {
+
+	/**
+	 * Context is the main object used when drawing with cairo. To draw with
+	 * cairo, you create a Context, set the target surface, and drawing options
+	 * for the Context, create shapes with functions like {Context.move_to()}
+	 * and {Context.line_to}(), and then draw shapes with {Context.stroke}() or
+	 * {Context.fill}().
+	 * 
+	 * Contexts can be pushed to a stack via {Context.save}(). They may then
+	 * safely be changed, without losing the current state. Use
+	 * {Context.restore}() to restore to the saved state.
+	 */
+	class Context {
+		/**
+		 * Creates a new Context with all graphics state parameters set to
+		 * default values and with `target` as a target surface. The target
+		 * surface should be constructed with a backend-specific function such
+		 * as {ImageSurface} (or any other cairo backend surface create variant).
+		 */
+		const def new(self, target) {
+			self.d_ptr = cairo.Context.g_lib.call('cairo_create', target.to_cairo_surface_t())
+			self.d_ptr.delete = def [g_lib = cairo.Context.g_lib] (self) {
+				g_lib.call('cairo_destroy', self)
+			}
+			return self
+		}
+
+		/**
+		 * Append the `path` onto the current path. The path may be either the
+		 * return value from one of {Context.copy_path}() or
+		 * {Context.copy_path_flat}() or it may be constructed manually (in C).
+		 */
+		const def append_path(self, path) {
+			cairo.Context.g_lib.call('cairo_append_path', self.d_ptr, path.to_cairo_path_t())
+		}
+
+		/**
+		 * Adds a circular arc of the given `radius` to the current path. The arc
+		 * is centered at (`xc`, `yc`), begins at `angle1` and proceeds in the
+		 * direction of increasing angles to end at `angle2`. If `angle2` is less
+		 * than `angle1` it will be progressively increased by 2*PI until it is
+		 * greater than `angle1`.
+		 * 
+		 * If there is a current point, an initial line segment will be added to
+		 * the path to connect the current point to the beginning of the arc. If
+		 * this initial line is undesired, it can be avoided by calling
+		 * {Context.new_sub_path}() before calling {Context.arc}().
+		 * 
+		 * Angles are measured in radians. An angle of 0.0 is in the direction
+		 * of the positive X axis (in user space). An angle of PI/2.0 radians
+		 * (90 degrees) is in the direction of the positive Y axis (in user
+		 * space). Angles increase in the direction from the positive X axis
+		 * toward the positive Y axis. So with the default transformation matrix,
+		 * angles increase in a clockwise direction.
+		 * 
+		 * To convert from degrees to radians, use degrees * (math.pi / 180).
+		 * 
+		 * This function gives the arc in the direction of increasing angles;
+		 * see {Context.arc_negative}() to get the arc in the direction of
+		 * decreasing angles.
+		 * 
+		 * The arc is circular in user space. To achieve an elliptical arc, you
+		 * can scale the current transformation matrix by different amounts in
+		 * the X and Y directions. For example, to draw an ellipse in the box
+		 * given by x, y, width, height:
+		 * 
+		 * ```mint
+		 * ctx.save()
+		 * ctx.translate(x + width / 2., y + height / 2.)
+		 * ctx.scale(width / 2., height / 2.)
+		 * ctx.arc(0., 0., 1., 0., 2 * math.pi)
+		 * ctx.restore()
+		 * ```
+		 */
+		const def arc(self, xc, yc, radius, angle1, angle2) {
+			cairo.Context.g_lib.call('cairo_arc', self.d_ptr, number(xc), number(yc), number(radius), number(angle1), number(angle2))
+		}
+
+		/**
+		 * Adds a circular arc of the given `radius` to the current path. The arc
+		 * is centered at (`xc`, `yc`), begins at `angle1` and proceeds in the
+		 * direction of decreasing angles to end at `angle2`. If `angle2` is
+		 * greater than `angle1` it will be progressively decreased by 2*PI until
+		 * it is less than `angle1`.
+		 * 
+		 * See {Context.arc}() for more details. This function differs only in
+		 * the direction of the arc between the two angles.
+		 */
+		const def arc_negative(self, xc, yc, radius, angle1, angle2) {
+			cairo.Context.g_lib.call('cairo_arc_negative', self.d_ptr, number(xc), number(yc), number(radius), number(angle1), number(angle2))
+		}
+
+		/**
+		 * Establishes a new clip region by intersecting the current clip region
+		 * with the current path as it would be filled by {Context.fill}() and
+		 * according to the current fill rule (see {Context.set_fill_rule}()).
+		 * 
+		 * After {clip}(), the current path will be cleared from the Context.
+		 * 
+		 * The current clip region affects all drawing operations by effectively
+		 * masking out any changes to the surface that are outside the current
+		 * clip region.
+		 * 
+		 * Calling {clip}() can only make the clip region smaller, never larger.
+		 * But the current clip is part of the graphics state, so a temporary
+		 * restriction of the clip region can be achieved by calling {clip}()
+		 * within a {Context.save}()/{Context.restore}() pair. The only other
+		 * means of increasing the size of the clip region is {Context.reset_clip}().
+		 */
+		const def clip(self) {
+			cairo.Context.g_lib.call('cairo_clip', self.d_ptr)
+		}
+
+		/**
+		 * Computes a bounding box in user coordinates covering the area inside
+		 * the current clip.
+		 * 
+		 * Returns an iterator containing :
+		 * * `x1`: left of the resulting extents
+		 * * `y1`: top of the resulting extents
+		 * * `x2`: right of the resulting extents
+		 * * `y2`: bottom of the resulting extents
+		 */
+		const def clip_extents(self) {
+			return cairo.Context.g_lib.call('cairo_clip_extents', self.d_ptr)
+		}
+
+		/**
+		 * Returns the instance of `cairo_t` associated with the object.
+		 */
+		~ const def to_cairo_t(self) {
+			return self.d_ptr
+		}
+
+		/// Global library handle
+		- @g_lib = lib('libmint-cairo')
+
+		/// Object data
+		- d_ptr = null
+	}
+
+	/**
+	 * These constants are used to describe the type of one portion of a path
+	 * when represented as a {Path}.
+	 */
+	enum PathDataType {
+		// A move-to operation
+		MOVE_TO
+		/// A line-to operation
+		LINE_TO
+		/// A curve-to operation
+		CURVE_TO
+		/// A close-path operation
+		CLOSE_PATH
+	}
+
+	/**
+	 * Path cannot be instantiated directly, it is created by calling
+	 * {Context.copy_path}() and {Context.copy_path_flat}().
+	 */
+	class Path {
+		/**
+		 * 
+		 */
+		~ const def new(self, d_ptr) {
+			self.d_ptr = d_ptr
+			return self
+		}
+
+		/**
+		 * 
+		 */
+		const def toString(self) {
+
+		}
+
+		/**
+		 * 
+		 */
+		const def in(self, value) {
+			
+		}
+
+		/**
+		 * 
+		 */
+		const def in(self) {
+			
+		}
+
+		/**
+		 * Returns the instance of `cairo_path_t` associated with the object.
+		 */
+		~ const def to_cairo_path_t(self) {
+			return self.d_ptr
+		}
+
+		/// Global library handle
+		- @g_lib = lib('libmint-cairo')
+
+		/// Object data
+		- d_ptr = null
+	}
+
+	/**
+	 * `Surface` is the abstract base class from which all the other surface
+	 * classes derive. It cannot be instantiated directly.
+	 */
+	class Surface {
+		/// Disable {cairo.Surface} constructor.
+		- const new = none
+
+		/**
+		 * Emits the current page for backends that support multiple pages, but
+		 * doesn’t clear it, so that the contents of the current page will be
+		 * retained for the next page. Use {show_page}() if you want to get an
+		 * empty page after the emission.
+		 * 
+		 * {Context.copy_page}() is a convenience function for this.
+		 */
+		const def copy_page(self) {
+			cairo.Surface.g_lib.call('cairo_surface_copy_page', self.d_ptr)
+		}
+
+		/**
+		 * Returns the instance of `cairo_t` associated with the object.
+		 */
+		~ const def to_cairo_surface_t(self) {
+			return self.d_ptr
+		}
+
+		/// Global library handle
+		# @g_lib = lib('libmint-cairo')
+
+		/// Object data
+		# d_ptr = null
+	}
+
+	/**
+	 * A {cairo.ImageSurface} provides the ability to render to memory buffers
+	 * either allocated by cairo or by the calling code. The supported image
+	 * formats are those defined in {cairo.Format}.
+	 */
+	class SurfaceImage : cairo.Surface {
+		/**
+		 * Creates an {ImageSurface} of the specified format and dimensions.
+		 * Initially the surface contents are all 0. (Specifically, within each
+		 * pixel, each color or alpha channel belonging to format will be 0. The
+		 * contents of bits within a pixel, but not belonging to the given format
+		 * are undefined).
+		 */
+		const def new(self, format, width, height) {
+			self.d_ptr = cairo.Surface.g_lib.call('cairo_surface_create_similar_image', format.to_cairo_format_t(), number(width), number(height))
+			self.d_ptr.delete = def [g_lib = cairo.Surface.g_lib] (self) {
+				g_lib.call('cairo_surface_destroy', self)
+			}
+			return self
+		}
+
+	}
+}
