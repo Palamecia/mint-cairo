@@ -1,5 +1,5 @@
-#include <mint/memory/functiontool.h>
-#include <mint/memory/casttool.h>
+#include <memory/functiontool.h>
+#include <memory/casttool.h>
 #include <cairo/cairo.h>
 
 using namespace mint;
