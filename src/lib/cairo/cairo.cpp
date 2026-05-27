@@ -1,85 +1,69 @@
-#include <mint/memory/functiontool.h>
-#include <mint/memory/casttool.h>
 #include <cairo/cairo.h>
+#include <mint/memory/builtin/iterator.h>
+#include <mint/memory/builtin/libobject.h>
+#include <mint/memory/cast_tools.h>
+#include <mint/memory/function_tools.h>
+#include <mint/memory/reference.h>
 
-using namespace mint;
+namespace {
 
 template<class Type>
-static Type *get_object(Reference &object) {
-	return object.data<LibObject<Type>>()->impl;
+Type* get_object(const mint::Reference& object) {
+	return object.data<mint::LibObject<Type>>().ptr;
 }
 
-MINT_FUNCTION(cairo_create, 1, cursor) {
-
-	FunctionHelper helper(cursor, 1);
-	Reference &target = helper.pop_parameter();
-
-	helper.return_value(create_object(cairo_create(get_object<cairo_surface_t>(target))));
+mint::Reference mint_cairo_create(mint::Cursor& cursor, const mint::Reference& target) {
+	return mint::create_c_object(cursor.ast(), cairo_create(get_object<cairo_surface_t>(target)));
 }
 
-MINT_FUNCTION(cairo_destroy, 1, cursor) {
-
-	FunctionHelper helper(cursor, 1);
-	Reference &cr = helper.pop_parameter();
-
+mint::Reference mint_cairo_destroy(mint::Cursor& /*cursor*/, const mint::Reference& cr) {
 	cairo_destroy(get_object<cairo_t>(cr));
+	return {};
 }
 
-MINT_FUNCTION(cairo_append_path, 2, cursor) {
-
-	FunctionHelper helper(cursor, 2);
-	Reference &path = helper.pop_parameter();
-	Reference &cr = helper.pop_parameter();
-
+mint::Reference mint_cairo_append_path(mint::Cursor& /*cursor*/, const mint::Reference& cr,
+    const mint::Reference& path) {
 	cairo_append_path(get_object<cairo_t>(cr), get_object<cairo_path_t>(path));
+	return {};
 }
 
-MINT_FUNCTION(cairo_arc, 6, cursor) {
-
-	FunctionHelper helper(cursor, 6);
-	Reference &angle2 = helper.pop_parameter();
-	Reference &angle1 = helper.pop_parameter();
-	Reference &radius = helper.pop_parameter();
-	Reference &yc = helper.pop_parameter();
-	Reference &xc = helper.pop_parameter();
-	Reference &cr = helper.pop_parameter();
-
-	cairo_arc(get_object<cairo_t>(cr), to_number(cursor, xc), to_number(cursor, yc), to_number(cursor, radius), to_number(cursor, angle1), to_number(cursor, angle2));
+mint::Reference mint_cairo_arc(mint::Cursor& cursor, const mint::Reference& cr, const mint::Reference& xc,
+    const mint::Reference& yc, const mint::Reference& radius, const mint::Reference& angle1,
+    const mint::Reference& angle2) {
+	cairo_arc(get_object<cairo_t>(cr), to_number(cursor, xc), to_number(cursor, yc), to_number(cursor, radius),
+	    to_number(cursor, angle1), to_number(cursor, angle2));
+	return {};
 }
 
-MINT_FUNCTION(cairo_arc_negative, 6, cursor) {
-
-	FunctionHelper helper(cursor, 6);
-	Reference &angle2 = helper.pop_parameter();
-	Reference &angle1 = helper.pop_parameter();
-	Reference &radius = helper.pop_parameter();
-	Reference &yc = helper.pop_parameter();
-	Reference &xc = helper.pop_parameter();
-	Reference &cr = helper.pop_parameter();
-
-	cairo_arc_negative(get_object<cairo_t>(cr), to_number(cursor, xc), to_number(cursor, yc), to_number(cursor, radius), to_number(cursor, angle1), to_number(cursor, angle2));
+mint::Reference mint_cairo_arc_negative(mint::Cursor& cursor, const mint::Reference& cr, const mint::Reference& xc,
+    const mint::Reference& yc, const mint::Reference& radius, const mint::Reference& angle1,
+    const mint::Reference& angle2) {
+	cairo_arc_negative(get_object<cairo_t>(cr), to_number(cursor, xc), to_number(cursor, yc), to_number(cursor, radius),
+	    to_number(cursor, angle1), to_number(cursor, angle2));
+	return {};
 }
 
-MINT_FUNCTION(cairo_clip, 1, cursor) {
-
-	FunctionHelper helper(cursor, 1);
-	Reference &cr = helper.pop_parameter();
-
+mint::Reference mint_cairo_clip(mint::Cursor& /*cursor*/, mint::Reference& cr) {
 	cairo_clip(get_object<cairo_t>(cr));
+	return {};
 }
 
-MINT_FUNCTION(cairo_clip_extents, 1, cursor) {
-
-	FunctionHelper helper(cursor, 1);
-	Reference &cr = helper.pop_parameter();
-
-	double x1, y1, x2, y2;
+mint::Reference mint_cairo_clip_extents(mint::Cursor& cursor, mint::Reference& cr) {
+	auto x1 = double();
+	auto y1 = double();
+	auto x2 = double();
+	auto y2 = double();
 	cairo_clip_extents(get_object<cairo_t>(cr), &x1, &y1, &x2, &y2);
-
-	WeakReference result = create_iterator();
-	iterator_insert(result.data<Iterator>(), create_number(x1));
-	iterator_insert(result.data<Iterator>(), create_number(y1));
-	iterator_insert(result.data<Iterator>(), create_number(x2));
-	iterator_insert(result.data<Iterator>(), create_number(y2));
-	helper.return_value(std::move(result));
+	return mint::create_iterator_from(cursor, mint::create_number(x1), mint::create_number(y1), mint::create_number(x2),
+	    mint::create_number(y2));
 }
+
+}
+
+MINT_EXPORT_FUNCTION(mint_cairo_create, 1)
+MINT_EXPORT_FUNCTION(mint_cairo_destroy, 1)
+MINT_EXPORT_FUNCTION(mint_cairo_append_path, 2)
+MINT_EXPORT_FUNCTION(mint_cairo_arc, 6)
+MINT_EXPORT_FUNCTION(mint_cairo_arc_negative, 6)
+MINT_EXPORT_FUNCTION(mint_cairo_clip, 1)
+MINT_EXPORT_FUNCTION(mint_cairo_clip_extents, 1)

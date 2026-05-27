@@ -21,9 +21,9 @@ package cairo {
 		 * as {ImageSurface} (or any other cairo backend surface create variant).
 		 */
 		const def new(self, target) {
-			self.d_ptr = cairo.Context.g_lib.call('cairo_create', target.to_cairo_surface_t())
+			self.d_ptr = cairo.Context.g_lib.call('mint_cairo_create', target.to_cairo_surface_t())
 			self.d_ptr.delete = def [g_lib = cairo.Context.g_lib] (self) {
-				g_lib.call('cairo_destroy', self)
+				g_lib.call('mint_cairo_destroy', self)
 			}
 			return self
 		}
@@ -34,7 +34,7 @@ package cairo {
 		 * {Context.copy_path_flat}() or it may be constructed manually (in C).
 		 */
 		const def append_path(self, path) {
-			cairo.Context.g_lib.call('cairo_append_path', self.d_ptr, path.to_cairo_path_t())
+			cairo.Context.g_lib.call('mint_cairo_append_path', self.d_ptr, path.to_cairo_path_t())
 		}
 
 		/**
@@ -76,7 +76,7 @@ package cairo {
 		 * ```
 		 */
 		const def arc(self, xc, yc, radius, angle1, angle2) {
-			cairo.Context.g_lib.call('cairo_arc', self.d_ptr, number(xc), number(yc), number(radius), number(angle1), number(angle2))
+			cairo.Context.g_lib.call('mint_cairo_arc', self.d_ptr, number(xc), number(yc), number(radius), number(angle1), number(angle2))
 		}
 
 		/**
@@ -90,7 +90,7 @@ package cairo {
 		 * the direction of the arc between the two angles.
 		 */
 		const def arc_negative(self, xc, yc, radius, angle1, angle2) {
-			cairo.Context.g_lib.call('cairo_arc_negative', self.d_ptr, number(xc), number(yc), number(radius), number(angle1), number(angle2))
+			cairo.Context.g_lib.call('mint_cairo_arc_negative', self.d_ptr, number(xc), number(yc), number(radius), number(angle1), number(angle2))
 		}
 
 		/**
@@ -111,7 +111,7 @@ package cairo {
 		 * means of increasing the size of the clip region is {Context.reset_clip}().
 		 */
 		const def clip(self) {
-			cairo.Context.g_lib.call('cairo_clip', self.d_ptr)
+			cairo.Context.g_lib.call('mint_cairo_clip', self.d_ptr)
 		}
 
 		/**
@@ -125,7 +125,7 @@ package cairo {
 		 * * `y2`: bottom of the resulting extents
 		 */
 		const def clip_extents(self) {
-			return cairo.Context.g_lib.call('cairo_clip_extents', self.d_ptr)
+			return cairo.Context.g_lib.call('mint_cairo_clip_extents', self.d_ptr)
 		}
 
 		/**
@@ -222,7 +222,7 @@ package cairo {
 		 * {Context.copy_page}() is a convenience function for this.
 		 */
 		const def copy_page(self) {
-			cairo.Surface.g_lib.call('cairo_surface_copy_page', self.d_ptr)
+			cairo.Surface.g_lib.call('mint_cairo_surface_copy_page', self.d_ptr)
 		}
 
 		/**
@@ -253,9 +253,9 @@ package cairo {
 		 * are undefined).
 		 */
 		const def new(self, format, width, height) {
-			self.d_ptr = cairo.Surface.g_lib.call('cairo_surface_create_similar_image', format.to_cairo_format_t(), number(width), number(height))
+			self.d_ptr = cairo.Surface.g_lib.call('mint_cairo_surface_create_similar_image', format.to_cairo_format_t(), number(width), number(height))
 			self.d_ptr.delete = def [g_lib = cairo.Surface.g_lib] (self) {
-				g_lib.call('cairo_surface_destroy', self)
+				g_lib.call('mint_cairo_surface_destroy', self)
 			}
 			return self
 		}

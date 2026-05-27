@@ -1,13 +1,14 @@
 project(module-cairo)
 
-set(${PROJECT_NAME}_LIB
+add_custom_target(
+	mint-cairo-module-cairo
+SOURCES
 	cairo.mn
 )
 
-add_custom_target(${PROJECT_NAME}
-	SOURCES
-	${${PROJECT_NAME}_LIB}
-)
-
 # Install
-mint_install_modules(${${PROJECT_NAME}_LIB} SUBDIR cairo)
+get_target_property(${PROJECT_NAME}_SOURCES mint-cairo-module-cairo SOURCES)
+install(
+	FILES ${${PROJECT_NAME}_SOURCES}
+	COMPONENT runtime DESTINATION ${MINT_MODULES_INSTALL_DIR}/codec
+)

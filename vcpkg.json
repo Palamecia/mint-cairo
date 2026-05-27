@@ -1,0 +1,7 @@
+{
+  "name": "mint-cairo",
+  "dependencies": [
+    "pkgconf",
+    "cairo"
+  ]
+}
