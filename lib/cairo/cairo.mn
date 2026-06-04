@@ -2,6 +2,128 @@ load mint.type
 
 package cairo {
 
+	enum Antialias {
+		DEFAULT
+		NONE
+		GRAY
+		SUBPIXEL
+		FAST
+		GOOD
+		BEST
+	}
+
+	enum Content {
+		COLOR
+		ALPHA
+		COLOR_ALPHA
+	}
+
+	enum FontSlant {
+		NORMAL
+		ITALIC
+		OBLIQUE
+	}
+
+	enum FontWeight {
+		NORMAL
+		BOLD
+	}
+
+	enum FillRule {
+		WINDING
+		EVEN_ODD
+	}
+
+	enum Format {
+		ARGB32
+		RGB24
+		A8
+		A1
+		RGB16_565
+		RGB30
+	}
+
+	enum LineCap {
+		BUTT
+		ROUND
+		SQUARE
+	}
+
+	enum LineJoin {
+		MITER
+		ROUND
+		BEVEL
+	}
+
+	enum Operator {
+		CLEAR
+		SOURCE
+		OVER
+		IN
+		OUT
+		ATOP
+		DEST
+		DEST_OVER
+		DEST_IN
+		DEST_OUT
+		DEST_ATOP
+		XOR
+		ADD
+		SATURATE
+		MULTIPLY
+		SCREEN
+		OVERLAY
+		DARKEN
+		LIGHTEN
+		COLOR_DODGE
+		COLOR_BURN
+		HARD_LIGHT
+		SOFT_LIGHT
+		DIFFERENCE
+		EXCLUSION
+		HSL_HUE
+		HSL_SATURATION
+		HSL_COLOR
+		HSL_LUMINOSITY
+	}
+
+	enum PatternType {
+		SOLID
+		SURFACE
+		LINEAR
+		RADIAL
+		MESH
+		RASTER_SOURCE
+	}
+
+	enum SurfaceType {
+		IMAGE
+		PDF
+		PS
+		XLIB
+		XCB
+		GLITZ
+		QUARTZ
+		WIN32
+		BEOS
+		DIRECTFB
+		SVG
+		OS2
+		WIN32_PRINTING
+		QUARTZ_IMAGE
+		SCRIPT
+		QT
+		RECORDING
+		VG
+		GL
+		DRM
+		TEE
+		XML
+		SKIA
+		SUBSURFACE
+		COGL
+	}
+
 	/**
 	 * Context is the main object used when drawing with cairo. To draw with
 	 * cairo, you create a Context, set the target surface, and drawing options
@@ -38,6 +160,65 @@ package cairo {
 		}
 
 		/**
+		 * Creates a copy of the current path. The returned {Path} owns its
+		 * native path data and may be appended to this or another context.
+		 */
+		const def copy_path(self) {
+			return cairo.Path(cairo.Context.g_lib.call('mint_cairo_copy_path', self.d_ptr))
+		}
+
+		/**
+		 * Creates a flattened copy of the current path, where curves are
+		 * approximated with line segments.
+		 */
+		const def copy_path_flat(self) {
+			return cairo.Path(cairo.Context.g_lib.call('mint_cairo_copy_path_flat', self.d_ptr))
+		}
+
+		/**
+		 * Saves the current graphics state on the context stack.
+		 */
+		const def save(self) {
+			cairo.Context.g_lib.call('mint_cairo_save', self.d_ptr)
+		}
+
+		/**
+		 * Restores the most recently saved graphics state.
+		 */
+		const def restore(self) {
+			cairo.Context.g_lib.call('mint_cairo_restore', self.d_ptr)
+		}
+
+		/**
+		 * Redirects drawing to a temporary group with the same content type as
+		 * the current target.
+		 */
+		const def push_group(self) {
+			cairo.Context.g_lib.call('mint_cairo_push_group', self.d_ptr)
+		}
+
+		/**
+		 * Redirects drawing to a temporary group with an explicit content type.
+		 */
+		const def push_group_with_content(self, content) {
+			cairo.Context.g_lib.call('mint_cairo_push_group_with_content', self.d_ptr, content.toNumber())
+		}
+
+		/**
+		 * Ends the current group and returns it as a {Pattern}.
+		 */
+		const def pop_group(self) {
+			return cairo.Pattern(cairo.Context.g_lib.call('mint_cairo_pop_group', self.d_ptr))
+		}
+
+		/**
+		 * Ends the current group and sets it as the current source.
+		 */
+		const def pop_group_to_source(self) {
+			cairo.Context.g_lib.call('mint_cairo_pop_group_to_source', self.d_ptr)
+		}
+
+		/**
 		 * Adds a circular arc of the given `radius` to the current path. The arc
 		 * is centered at (`xc`, `yc`), begins at `angle1` and proceeds in the
 		 * direction of increasing angles to end at `angle2`. If `angle2` is less
@@ -67,7 +248,7 @@ package cairo {
 		 * the X and Y directions. For example, to draw an ellipse in the box
 		 * given by x, y, width, height:
 		 * 
-		 * ```mint
+		 * ```mn
 		 * ctx.save()
 		 * ctx.translate(x + width / 2., y + height / 2.)
 		 * ctx.scale(width / 2., height / 2.)
@@ -76,7 +257,7 @@ package cairo {
 		 * ```
 		 */
 		const def arc(self, xc, yc, radius, angle1, angle2) {
-			cairo.Context.g_lib.call('mint_cairo_arc', self.d_ptr, number(xc), number(yc), number(radius), number(angle1), number(angle2))
+			cairo.Context.g_lib.call('mint_cairo_arc', self.d_ptr, xc.toNumber(), yc.toNumber(), radius.toNumber(), angle1.toNumber(), angle2.toNumber())
 		}
 
 		/**
@@ -90,7 +271,71 @@ package cairo {
 		 * the direction of the arc between the two angles.
 		 */
 		const def arc_negative(self, xc, yc, radius, angle1, angle2) {
-			cairo.Context.g_lib.call('mint_cairo_arc_negative', self.d_ptr, number(xc), number(yc), number(radius), number(angle1), number(angle2))
+			cairo.Context.g_lib.call('mint_cairo_arc_negative', self.d_ptr, xc.toNumber(), yc.toNumber(), radius.toNumber(), angle1.toNumber(), angle2.toNumber())
+		}
+
+		/**
+		 * Adds a cubic Bezier spline to the current path.
+		 */
+		const def curve_to(self, x1, y1, x2, y2, x3, y3) {
+			cairo.Context.g_lib.call('mint_cairo_curve_to', self.d_ptr, x1.toNumber(), y1.toNumber(), x2.toNumber(), y2.toNumber(), x3.toNumber(), y3.toNumber())
+		}
+
+		/**
+		 * Closes the current sub-path by drawing a line to its start point.
+		 */
+		const def close_path(self) {
+			cairo.Context.g_lib.call('mint_cairo_close_path', self.d_ptr)
+		}
+
+		/**
+		 * Clears the current path.
+		 */
+		const def new_path(self) {
+			cairo.Context.g_lib.call('mint_cairo_new_path', self.d_ptr)
+		}
+
+		/**
+		 * Starts a new sub-path without connecting it to the previous one.
+		 */
+		const def new_sub_path(self) {
+			cairo.Context.g_lib.call('mint_cairo_new_sub_path', self.d_ptr)
+		}
+
+		/**
+		 * Begins a new sub-path at (`x`, `y`).
+		 */
+		const def move_to(self, x, y) {
+			cairo.Context.g_lib.call('mint_cairo_move_to', self.d_ptr, x.toNumber(), y.toNumber())
+		}
+
+		/**
+		 * Adds a line segment from the current point to (`x`, `y`).
+		 */
+		const def line_to(self, x, y) {
+			cairo.Context.g_lib.call('mint_cairo_line_to', self.d_ptr, x.toNumber(), y.toNumber())
+		}
+
+		/**
+		 * Moves the current point by (`dx`, `dy`) relative to its current
+		 * position.
+		 */
+		const def rel_move_to(self, dx, dy) {
+			cairo.Context.g_lib.call('mint_cairo_rel_move_to', self.d_ptr, dx.toNumber(), dy.toNumber())
+		}
+
+		/**
+		 * Adds a line segment by (`dx`, `dy`) relative to the current point.
+		 */
+		const def rel_line_to(self, dx, dy) {
+			cairo.Context.g_lib.call('mint_cairo_rel_line_to', self.d_ptr, dx.toNumber(), dy.toNumber())
+		}
+
+		/**
+		 * Adds a rectangular closed sub-path.
+		 */
+		const def rectangle(self, x, y, width, height) {
+			cairo.Context.g_lib.call('mint_cairo_rectangle', self.d_ptr, x.toNumber(), y.toNumber(), width.toNumber(), height.toNumber())
 		}
 
 		/**
@@ -115,6 +360,20 @@ package cairo {
 		}
 
 		/**
+		 * Like {Context.clip}(), but keeps the current path.
+		 */
+		const def clip_preserve(self) {
+			cairo.Context.g_lib.call('mint_cairo_clip_preserve', self.d_ptr)
+		}
+
+		/**
+		 * Resets the clip region to the target surface extents.
+		 */
+		const def reset_clip(self) {
+			cairo.Context.g_lib.call('mint_cairo_reset_clip', self.d_ptr)
+		}
+
+		/**
 		 * Computes a bounding box in user coordinates covering the area inside
 		 * the current clip.
 		 * 
@@ -129,6 +388,367 @@ package cairo {
 		}
 
 		/**
+		 * Fills the current path using the current source and fill rule.
+		 */
+		const def fill(self) {
+			cairo.Context.g_lib.call('mint_cairo_fill', self.d_ptr)
+		}
+
+		/**
+		 * Like {Context.fill}(), but keeps the current path.
+		 */
+		const def fill_preserve(self) {
+			cairo.Context.g_lib.call('mint_cairo_fill_preserve', self.d_ptr)
+		}
+
+		/**
+		 * Computes the extents of the area that would be filled.
+		 */
+		const def fill_extents(self) {
+			return cairo.Context.g_lib.call('mint_cairo_fill_extents', self.d_ptr)
+		}
+
+		/**
+		 * Returns true when (`x`, `y`) is inside the current fill path.
+		 */
+		const def in_fill(self, x, y) {
+			return cairo.Context.g_lib.call('mint_cairo_in_fill', self.d_ptr, x.toNumber(), y.toNumber())
+		}
+
+		/**
+		 * Strokes the current path using the current stroke style.
+		 */
+		const def stroke(self) {
+			cairo.Context.g_lib.call('mint_cairo_stroke', self.d_ptr)
+		}
+
+		/**
+		 * Like {Context.stroke}(), but keeps the current path.
+		 */
+		const def stroke_preserve(self) {
+			cairo.Context.g_lib.call('mint_cairo_stroke_preserve', self.d_ptr)
+		}
+
+		/**
+		 * Computes the extents of the area that would be stroked.
+		 */
+		const def stroke_extents(self) {
+			return cairo.Context.g_lib.call('mint_cairo_stroke_extents', self.d_ptr)
+		}
+
+		/**
+		 * Returns true when (`x`, `y`) is inside the current stroked path.
+		 */
+		const def in_stroke(self, x, y) {
+			return cairo.Context.g_lib.call('mint_cairo_in_stroke', self.d_ptr, x.toNumber(), y.toNumber())
+		}
+
+		/**
+		 * Paints the current source everywhere within the clip region.
+		 */
+		const def paint(self) {
+			cairo.Context.g_lib.call('mint_cairo_paint', self.d_ptr)
+		}
+
+		/**
+		 * Paints the current source with an additional alpha value.
+		 */
+		const def paint_with_alpha(self, alpha) {
+			cairo.Context.g_lib.call('mint_cairo_paint_with_alpha', self.d_ptr, alpha.toNumber())
+		}
+
+		/**
+		 * Emits the current page without clearing it.
+		 */
+		const def copy_page(self) {
+			cairo.Context.g_lib.call('mint_cairo_copy_page', self.d_ptr)
+		}
+
+		/**
+		 * Emits and clears the current page for paginated backends.
+		 */
+		const def show_page(self) {
+			cairo.Context.g_lib.call('mint_cairo_show_page', self.d_ptr)
+		}
+
+		/**
+		 * Sets the source to an opaque RGB color. Components are in the range
+		 * 0.0 to 1.0.
+		 */
+		const def set_source_rgb(self, red, green, blue) {
+			cairo.Context.g_lib.call('mint_cairo_set_source_rgb', self.d_ptr, red.toNumber(), green.toNumber(), blue.toNumber())
+		}
+
+		/**
+		 * Sets the source to an RGBA color. Components are in the range 0.0 to
+		 * 1.0.
+		 */
+		const def set_source_rgba(self, red, green, blue, alpha) {
+			cairo.Context.g_lib.call('mint_cairo_set_source_rgba', self.d_ptr, red.toNumber(), green.toNumber(), blue.toNumber(), alpha.toNumber())
+		}
+
+		/**
+		 * Sets the source pattern used by subsequent drawing operations.
+		 */
+		const def set_source(self, pattern) {
+			cairo.Context.g_lib.call('mint_cairo_set_source', self.d_ptr, pattern.to_cairo_pattern_t())
+		}
+
+		/**
+		 * Sets a surface as the source, positioned at (`x`, `y`).
+		 */
+		const def set_source_surface(self, surface, x, y) {
+			cairo.Context.g_lib.call('mint_cairo_set_source_surface', self.d_ptr, surface.to_cairo_surface_t(), x.toNumber(), y.toNumber())
+		}
+
+		/**
+		 * Masks the current source through `pattern`.
+		 */
+		const def mask(self, pattern) {
+			cairo.Context.g_lib.call('mint_cairo_mask', self.d_ptr, pattern.to_cairo_pattern_t())
+		}
+
+		/**
+		 * Masks the current source through `surface`.
+		 */
+		const def mask_surface(self, surface, surface_x, surface_y) {
+			cairo.Context.g_lib.call('mint_cairo_mask_surface', self.d_ptr, surface.to_cairo_surface_t(), surface_x.toNumber(), surface_y.toNumber())
+		}
+
+		/**
+		 * Sets the current line width.
+		 */
+		const def set_line_width(self, width) {
+			cairo.Context.g_lib.call('mint_cairo_set_line_width', self.d_ptr, width.toNumber())
+		}
+
+		/**
+		 * Returns the current line width.
+		 */
+		const def get_line_width(self) {
+			return cairo.Context.g_lib.call('mint_cairo_get_line_width', self.d_ptr)
+		}
+
+		/**
+		 * Sets the current miter limit.
+		 */
+		const def set_miter_limit(self, limit) {
+			cairo.Context.g_lib.call('mint_cairo_set_miter_limit', self.d_ptr, limit.toNumber())
+		}
+
+		/**
+		 * Returns the current miter limit.
+		 */
+		const def get_miter_limit(self) {
+			return cairo.Context.g_lib.call('mint_cairo_get_miter_limit', self.d_ptr)
+		}
+
+		/**
+		 * Sets the tolerance used when converting curves to trapezoids.
+		 */
+		const def set_tolerance(self, tolerance) {
+			cairo.Context.g_lib.call('mint_cairo_set_tolerance', self.d_ptr, tolerance.toNumber())
+		}
+
+		/**
+		 * Returns the current tolerance.
+		 */
+		const def get_tolerance(self) {
+			return cairo.Context.g_lib.call('mint_cairo_get_tolerance', self.d_ptr)
+		}
+
+		/**
+		 * Sets the compositing operator.
+		 */
+		const def set_operator(self, op) {
+			cairo.Context.g_lib.call('mint_cairo_set_operator', self.d_ptr, op.toNumber())
+		}
+
+		/**
+		 * Returns the current compositing operator.
+		 */
+		const def get_operator(self) {
+			return cairo.Context.g_lib.call('mint_cairo_get_operator', self.d_ptr)
+		}
+
+		/**
+		 * Sets the antialiasing mode.
+		 */
+		const def set_antialias(self, antialias) {
+			cairo.Context.g_lib.call('mint_cairo_set_antialias', self.d_ptr, antialias.toNumber())
+		}
+
+		/**
+		 * Returns the current antialiasing mode.
+		 */
+		const def get_antialias(self) {
+			return cairo.Context.g_lib.call('mint_cairo_get_antialias', self.d_ptr)
+		}
+
+		/**
+		 * Sets the fill rule used by fill and clip operations.
+		 */
+		const def set_fill_rule(self, fill_rule) {
+			cairo.Context.g_lib.call('mint_cairo_set_fill_rule', self.d_ptr, fill_rule.toNumber())
+		}
+
+		/**
+		 * Returns the current fill rule.
+		 */
+		const def get_fill_rule(self) {
+			return cairo.Context.g_lib.call('mint_cairo_get_fill_rule', self.d_ptr)
+		}
+
+		/**
+		 * Sets the line cap style.
+		 */
+		const def set_line_cap(self, line_cap) {
+			cairo.Context.g_lib.call('mint_cairo_set_line_cap', self.d_ptr, line_cap.toNumber())
+		}
+
+		/**
+		 * Returns the current line cap style.
+		 */
+		const def get_line_cap(self) {
+			return cairo.Context.g_lib.call('mint_cairo_get_line_cap', self.d_ptr)
+		}
+
+		/**
+		 * Sets the line join style.
+		 */
+		const def set_line_join(self, line_join) {
+			cairo.Context.g_lib.call('mint_cairo_set_line_join', self.d_ptr, line_join.toNumber())
+		}
+
+		/**
+		 * Returns the current line join style.
+		 */
+		const def get_line_join(self) {
+			return cairo.Context.g_lib.call('mint_cairo_get_line_join', self.d_ptr)
+		}
+
+		/**
+		 * Applies a translation to the current transformation matrix.
+		 */
+		const def translate(self, tx, ty) {
+			cairo.Context.g_lib.call('mint_cairo_translate', self.d_ptr, tx.toNumber(), ty.toNumber())
+		}
+
+		/**
+		 * Applies a scale to the current transformation matrix.
+		 */
+		const def scale(self, sx, sy) {
+			cairo.Context.g_lib.call('mint_cairo_scale', self.d_ptr, sx.toNumber(), sy.toNumber())
+		}
+
+		/**
+		 * Applies a rotation, in radians, to the current transformation matrix.
+		 */
+		const def rotate(self, angle) {
+			cairo.Context.g_lib.call('mint_cairo_rotate', self.d_ptr, angle.toNumber())
+		}
+
+		/**
+		 * Resets the current transformation matrix to the identity matrix.
+		 */
+		const def identity_matrix(self) {
+			cairo.Context.g_lib.call('mint_cairo_identity_matrix', self.d_ptr)
+		}
+
+		/**
+		 * Converts a point from user coordinates to device coordinates.
+		 */
+		const def user_to_device(self, x, y) {
+			return cairo.Context.g_lib.call('mint_cairo_user_to_device', self.d_ptr, x.toNumber(), y.toNumber())
+		}
+
+		/**
+		 * Converts a distance from user coordinates to device coordinates.
+		 */
+		const def user_to_device_distance(self, dx, dy) {
+			return cairo.Context.g_lib.call('mint_cairo_user_to_device_distance', self.d_ptr, dx.toNumber(), dy.toNumber())
+		}
+
+		/**
+		 * Converts a point from device coordinates to user coordinates.
+		 */
+		const def device_to_user(self, x, y) {
+			return cairo.Context.g_lib.call('mint_cairo_device_to_user', self.d_ptr, x.toNumber(), y.toNumber())
+		}
+
+		/**
+		 * Converts a distance from device coordinates to user coordinates.
+		 */
+		const def device_to_user_distance(self, dx, dy) {
+			return cairo.Context.g_lib.call('mint_cairo_device_to_user_distance', self.d_ptr, dx.toNumber(), dy.toNumber())
+		}
+
+		/**
+		 * Returns the current point as (`x`, `y`).
+		 */
+		const def get_current_point(self) {
+			return cairo.Context.g_lib.call('mint_cairo_get_current_point', self.d_ptr)
+		}
+
+		/**
+		 * Computes the extents of the current path.
+		 */
+		const def path_extents(self) {
+			return cairo.Context.g_lib.call('mint_cairo_path_extents', self.d_ptr)
+		}
+
+		/**
+		 * Returns the current context status code.
+		 */
+		const def status(self) {
+			return cairo.Context.g_lib.call('mint_cairo_status', self.d_ptr)
+		}
+
+		/**
+		 * Selects a toy font face for simple text drawing.
+		 */
+		const def select_font_face(self, family, slant = cairo.FontSlant.NORMAL, weight = cairo.FontWeight.NORMAL) {
+			cairo.Context.g_lib.call('mint_cairo_select_font_face', self.d_ptr, family, slant.toNumber(), weight.toNumber())
+		}
+
+		/**
+		 * Sets the current toy font size in user-space units.
+		 */
+		const def set_font_size(self, size) {
+			cairo.Context.g_lib.call('mint_cairo_set_font_size', self.d_ptr, size.toNumber())
+		}
+
+		/**
+		 * Draws UTF-8 text at the current point.
+		 */
+		const def show_text(self, text) {
+			cairo.Context.g_lib.call('mint_cairo_show_text', self.d_ptr, text)
+		}
+
+		/**
+		 * Adds the outline of UTF-8 text to the current path.
+		 */
+		const def text_path(self, text) {
+			cairo.Context.g_lib.call('mint_cairo_text_path', self.d_ptr, text)
+		}
+
+		/**
+		 * Returns text extents as (`x_bearing`, `y_bearing`, `width`,
+		 * `height`, `x_advance`, `y_advance`).
+		 */
+		const def text_extents(self, text) {
+			return cairo.Context.g_lib.call('mint_cairo_text_extents', self.d_ptr, text)
+		}
+
+		/**
+		 * Returns font extents as (`ascent`, `descent`, `height`,
+		 * `max_x_advance`, `max_y_advance`).
+		 */
+		const def font_extents(self) {
+			return cairo.Context.g_lib.call('mint_cairo_font_extents', self.d_ptr)
+		}
+
+		/**
 		 * Returns the instance of `cairo_t` associated with the object.
 		 */
 		~ const def to_cairo_t(self) {
@@ -139,7 +759,7 @@ package cairo {
 		- @g_lib = lib('libmint-cairo')
 
 		/// Object data
-		- d_ptr = null
+		- final d_ptr = null
 	}
 
 	/**
@@ -167,6 +787,9 @@ package cairo {
 		 */
 		~ const def new(self, d_ptr) {
 			self.d_ptr = d_ptr
+			self.d_ptr.delete = def [g_lib = cairo.Path.g_lib] (self) {
+				g_lib.call('mint_cairo_path_destroy', self)
+			}
 			return self
 		}
 
@@ -202,7 +825,7 @@ package cairo {
 		- @g_lib = lib('libmint-cairo')
 
 		/// Object data
-		- d_ptr = null
+		- final d_ptr = null
 	}
 
 	/**
@@ -226,6 +849,127 @@ package cairo {
 		}
 
 		/**
+		 * Emits and clears the current page for paginated backends.
+		 */
+		const def show_page(self) {
+			cairo.Surface.g_lib.call('mint_cairo_surface_show_page', self.d_ptr)
+		}
+
+		/**
+		 * Finishes the surface and releases backend resources.
+		 */
+		const def finish(self) {
+			cairo.Surface.g_lib.call('mint_cairo_surface_finish', self.d_ptr)
+		}
+
+		/**
+		 * Flushes pending drawing to the surface backend.
+		 */
+		const def flush(self) {
+			cairo.Surface.g_lib.call('mint_cairo_surface_flush', self.d_ptr)
+		}
+
+		/**
+		 * Marks the whole surface as dirty after direct pixel access.
+		 */
+		const def mark_dirty(self) {
+			cairo.Surface.g_lib.call('mint_cairo_surface_mark_dirty', self.d_ptr)
+		}
+
+		/**
+		 * Marks a rectangle as dirty after direct pixel access.
+		 */
+		const def mark_dirty_rectangle(self, x, y, width, height) {
+			cairo.Surface.g_lib.call('mint_cairo_surface_mark_dirty_rectangle', self.d_ptr, x.toNumber(), y.toNumber(), width.toNumber(), height.toNumber())
+		}
+
+		/**
+		 * Returns the surface status code.
+		 */
+		const def status(self) {
+			return cairo.Surface.g_lib.call('mint_cairo_surface_status', self.d_ptr)
+		}
+
+		/**
+		 * Returns the backend type of the surface.
+		 */
+		const def get_type(self) {
+			return cairo.Surface.g_lib.call('mint_cairo_surface_get_type', self.d_ptr)
+		}
+
+		/**
+		 * Returns the content type supported by the surface.
+		 */
+		const def get_content(self) {
+			return cairo.Surface.g_lib.call('mint_cairo_surface_get_content', self.d_ptr)
+		}
+
+		/**
+		 * Writes the surface to a PNG file and returns the cairo status code.
+		 */
+		const def write_to_png(self, filename) {
+			return cairo.Surface.g_lib.call('mint_cairo_surface_write_to_png', self.d_ptr, filename)
+		}
+
+		/**
+		 * Sets the device scale used when mapping surface pixels to device
+		 * units.
+		 */
+		const def set_device_scale(self, x_scale, y_scale) {
+			cairo.Surface.g_lib.call('mint_cairo_surface_set_device_scale', self.d_ptr, x_scale.toNumber(), y_scale.toNumber())
+		}
+
+		/**
+		 * Returns the device scale as (`x_scale`, `y_scale`).
+		 */
+		const def get_device_scale(self) {
+			return cairo.Surface.g_lib.call('mint_cairo_surface_get_device_scale', self.d_ptr)
+		}
+
+		/**
+		 * Sets the device offset for the surface.
+		 */
+		const def set_device_offset(self, x_offset, y_offset) {
+			cairo.Surface.g_lib.call('mint_cairo_surface_set_device_offset', self.d_ptr, x_offset.toNumber(), y_offset.toNumber())
+		}
+
+		/**
+		 * Returns the device offset as (`x_offset`, `y_offset`).
+		 */
+		const def get_device_offset(self) {
+			return cairo.Surface.g_lib.call('mint_cairo_surface_get_device_offset', self.d_ptr)
+		}
+
+		/**
+		 * Sets the fallback rasterization resolution in pixels per inch.
+		 */
+		const def set_fallback_resolution(self, x_pixels_per_inch, y_pixels_per_inch) {
+			cairo.Surface.g_lib.call('mint_cairo_surface_set_fallback_resolution', self.d_ptr, x_pixels_per_inch.toNumber(), y_pixels_per_inch.toNumber())
+		}
+
+		/**
+		 * Returns the fallback resolution as (`x_pixels_per_inch`,
+		 * `y_pixels_per_inch`).
+		 */
+		const def get_fallback_resolution(self) {
+			return cairo.Surface.g_lib.call('mint_cairo_surface_get_fallback_resolution', self.d_ptr)
+		}
+
+		/**
+		 * Creates a surface as compatible as possible with this surface.
+		 */
+		const def create_similar(self, content, width, height) {
+			return cairo.SurfaceSimilar(cairo.Surface.g_lib.call('mint_cairo_surface_create_similar', self.d_ptr, content.toNumber(), width.toNumber(), height.toNumber()))
+		}
+
+		/**
+		 * Creates an image surface optimized for use with this surface.
+		 */
+		const def create_similar_image(self, format, width, height) {
+			return cairo.SurfaceImage(cairo.Surface.g_lib.call('mint_cairo_surface_create_similar_image', self.d_ptr, format.toNumber(), width.toNumber(), height.toNumber()))
+		}
+
+		/**
 		 * Returns the instance of `cairo_t` associated with the object.
 		 */
 		~ const def to_cairo_surface_t(self) {
@@ -236,7 +980,7 @@ package cairo {
 		# @g_lib = lib('libmint-cairo')
 
 		/// Object data
-		# d_ptr = null
+		# final d_ptr = null
 	}
 
 	/**
@@ -253,12 +997,158 @@ package cairo {
 		 * are undefined).
 		 */
 		const def new(self, format, width, height) {
-			self.d_ptr = cairo.Surface.g_lib.call('mint_cairo_surface_create_similar_image', format.to_cairo_format_t(), number(width), number(height))
+			if (height == null) {
+				self.d_ptr = cairo.Surface.g_lib.call('mint_cairo_surface_create_from_png', format)
+			} else {
+				self.d_ptr = cairo.Surface.g_lib.call('mint_cairo_surface_create_image', format.toNumber(), width.toNumber(), height.toNumber())
+			}
 			self.d_ptr.delete = def [g_lib = cairo.Surface.g_lib] (self) {
 				g_lib.call('mint_cairo_surface_destroy', self)
 			}
 			return self
 		}
 
+		~ const def new(self, d_ptr) {
+			self.d_ptr = d_ptr
+			self.d_ptr.delete = def [g_lib = cairo.Surface.g_lib] (self) {
+				g_lib.call('mint_cairo_surface_destroy', self)
+			}
+			return self
+		}
+
+		/**
+		 * Returns the image width in pixels.
+		 */
+		const def get_width(self) {
+			return cairo.Surface.g_lib.call('mint_cairo_image_surface_get_width', self.d_ptr)
+		}
+
+		/**
+		 * Returns the image height in pixels.
+		 */
+		const def get_height(self) {
+			return cairo.Surface.g_lib.call('mint_cairo_image_surface_get_height', self.d_ptr)
+		}
+
+		/**
+		 * Returns the number of bytes between rows.
+		 */
+		const def get_stride(self) {
+			return cairo.Surface.g_lib.call('mint_cairo_image_surface_get_stride', self.d_ptr)
+		}
+
+		/**
+		 * Returns the image pixel format.
+		 */
+		const def get_format(self) {
+			return cairo.Surface.g_lib.call('mint_cairo_image_surface_get_format', self.d_ptr)
+		}
+
+	}
+
+	class SurfaceSimilar : cairo.Surface {
+		~ const def new(self, d_ptr) {
+			self.d_ptr = d_ptr
+			self.d_ptr.delete = def [g_lib = cairo.Surface.g_lib] (self) {
+				g_lib.call('mint_cairo_surface_destroy', self)
+			}
+			return self
+		}
+	}
+
+	/**
+	 * A Pattern represents a source or mask used by drawing operations.
+	 */
+	class Pattern {
+		/**
+		 * Creates a solid RGB pattern.
+		 */
+		const def new(self, red, green, blue) {
+			self.d_ptr = cairo.Pattern.g_lib.call('mint_cairo_pattern_create_rgb', red.toNumber(), green.toNumber(), blue.toNumber())
+			self.d_ptr.delete = def [g_lib = cairo.Pattern.g_lib] (self) {
+				g_lib.call('mint_cairo_pattern_destroy', self)
+			}
+			return self
+		}
+
+		/**
+		 * Wraps an existing native cairo pattern pointer.
+		 */
+		~ const def new(self, d_ptr) {
+			self.d_ptr = d_ptr
+			self.d_ptr.delete = def [g_lib = cairo.Pattern.g_lib] (self) {
+				g_lib.call('mint_cairo_pattern_destroy', self)
+			}
+			return self
+		}
+
+		/**
+		 * Creates a solid RGBA pattern.
+		 */
+		@ const def rgba(red, green, blue, alpha) {
+			return cairo.Pattern(cairo.Pattern.g_lib.call('mint_cairo_pattern_create_rgba', red.toNumber(), green.toNumber(), blue.toNumber(), alpha.toNumber()))
+		}
+
+		/**
+		 * Creates a pattern that uses `surface` as its source.
+		 */
+		@ const def surface(surface) {
+			return cairo.Pattern(cairo.Pattern.g_lib.call('mint_cairo_pattern_create_for_surface', surface.to_cairo_surface_t()))
+		}
+
+		/**
+		 * Creates a linear gradient from (`x0`, `y0`) to (`x1`, `y1`).
+		 */
+		@ const def linear(x0, y0, x1, y1) {
+			return cairo.Pattern(cairo.Pattern.g_lib.call('mint_cairo_pattern_create_linear', x0.toNumber(), y0.toNumber(), x1.toNumber(), y1.toNumber()))
+		}
+
+		/**
+		 * Creates a radial gradient between two circles.
+		 */
+		@ const def radial(cx0, cy0, radius0, cx1, cy1, radius1) {
+			return cairo.Pattern(cairo.Pattern.g_lib.call('mint_cairo_pattern_create_radial', cx0.toNumber(), cy0.toNumber(), radius0.toNumber(), cx1.toNumber(), cy1.toNumber(), radius1.toNumber()))
+		}
+
+		/**
+		 * Adds an opaque color stop to a gradient pattern.
+		 */
+		const def add_color_stop_rgb(self, offset, red, green, blue) {
+			cairo.Pattern.g_lib.call('mint_cairo_pattern_add_color_stop_rgb', self.d_ptr, offset.toNumber(), red.toNumber(), green.toNumber(), blue.toNumber())
+		}
+
+		/**
+		 * Adds a translucent color stop to a gradient pattern.
+		 */
+		const def add_color_stop_rgba(self, offset, red, green, blue, alpha) {
+			cairo.Pattern.g_lib.call('mint_cairo_pattern_add_color_stop_rgba', self.d_ptr, offset.toNumber(), red.toNumber(), green.toNumber(), blue.toNumber(), alpha.toNumber())
+		}
+
+		/**
+		 * Returns the pattern status code.
+		 */
+		const def status(self) {
+			return cairo.Pattern.g_lib.call('mint_cairo_pattern_status', self.d_ptr)
+		}
+
+		/**
+		 * Returns the pattern type.
+		 */
+		const def get_type(self) {
+			return cairo.Pattern.g_lib.call('mint_cairo_pattern_get_type', self.d_ptr)
+		}
+
+		/**
+		 * Returns the instance of `cairo_pattern_t` associated with the object.
+		 */
+		~ const def to_cairo_pattern_t(self) {
+			return self.d_ptr
+		}
+
+		/// Global library handle
+		- @g_lib = lib('libmint-cairo')
+
+		/// Object data
+		- final d_ptr = null
 	}
 }
